@@ -31,7 +31,6 @@ class WorldBossLoot(Handler):
                     response += '```'
                     await self._bot.send_message(message.channel, response)
             except Exception as e:
-                print(e.message)
                 await self._bot.send_message(message.channel, 'Parsing error.')
             if message.content.startswith('!calc'):
                 try:
@@ -42,7 +41,6 @@ class WorldBossLoot(Handler):
                     response += '```'
                     await self._bot.send_message(message.channel, response)
                 except Exception as e:
-                    print(e.message)
                     await self._bot.send_message(
                         message.channel, 'Error performing calculation.')
 
@@ -67,16 +65,24 @@ class WorldBossLoot(Handler):
         # Compute the value for each guild based on scout and kill
         # participation.
         for g in guilds:
-            y = (100 * self._kill_dict[g] // total_kill) // 2
-            z = (100 * self._scout_dict[g] // total_scout) // 2
+            if total_kill > 0:
+                y = (100 * self._kill_dict[g] // total_kill) // 2
+            else:
+                y = 0
+            if total_scout > 0:
+                z = (100 * self._scout_dict[g] // total_scout) // 2
+            else:
+                z = 0
             x = z + y
             total += x
             values.append([g, x])
         values.sort(key=lambda x: x[1], reverse=True)
-        idx = 0
+        if total == 0:
+            return []
 
         # If total doesn't add up to 100, distribute missing points to guilds
         # starting with the highest one.
+        idx = 0
         while total < 100:
             values[idx][1] += 1
             total += 1
