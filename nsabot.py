@@ -12,6 +12,7 @@ class NSABot(Client):
 
     def __init__(self, handler_list):
         super().__init__()
+        self.handlers = handler_list
         for handler in handler_list:
             for trigger in handler.command_triggers():
                 self._handlers[trigger] = handler
@@ -19,9 +20,11 @@ class NSABot(Client):
 
     async def on_ready(self):
         print('Connected.')
+        for handler in self.handlers:
+            handler.client_ready()
 
     async def on_message(self, message):
-        if message.content:
+        if message.content and message.author != self.user:
             cmd = message.content.split()[0]
             if cmd in self._handlers.keys():
                 await self._handlers[cmd].process_message(message)

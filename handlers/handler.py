@@ -8,6 +8,9 @@ class Handler:
     def register_bot(self, bot):
         self._bot = bot
 
+    def client_ready(self):
+        pass
+
     # Processes a given message.
     async def process_message(self, message):
         pass
