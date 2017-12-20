@@ -33,6 +33,7 @@ if __name__ == '__main__':
         args.guild_server_id, args.totp_secret)
     wboss = world_boss_loot.WorldBossLoot(args.wb_channel_id, args.wb_role_id,
                                           args.wb_server_id)
-    timer = world_boss_timers.WorldBossTimers(args.wb_channel_id, args.wb_role_id,
-                                             args.wb_server_id)
+    timer = world_boss_timers.WorldBossTimers(args.wb_channel_id,
+                                              args.wb_role_id,
+                                              args.wb_server_id)
     NSABot([gbank, wboss, timer]).run(args.bot_token)
