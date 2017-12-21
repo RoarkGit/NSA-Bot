@@ -4,9 +4,10 @@ import re
 
 from .handler import Handler
 
-class GMT1(tzinfo): # directly from pydocs B-)
+class GMT1(tzinfo):
     def utcoffset(self, dt):
         return timedelta(hours=1) + self.dst(dt)
+
     def dst(self, dt):
         d = datetime(dt.year, 4, 1)
         # summer time starts on last sunday of march
@@ -18,9 +19,9 @@ class GMT1(tzinfo): # directly from pydocs B-)
             return timedelta(hours=1)
         else:
             return timedelta(0)
+
     def tzname(self, dt):
         return "GMT +1"
-
 
 
 class WorldBossTimers(Handler):
@@ -31,7 +32,7 @@ class WorldBossTimers(Handler):
         self._wb_channel_id = wb_channel_id
         self._wb_role_id = wb_role_id
         self._wb_server_id = wb_server_id
-        self._wb_tod = { "azu": None, "kaz": None, "drg": None, }
+        self._wb_tod = {"azu": None, "kaz": None, "drg": None}
         for key in self._wb_tod:
             self._wb_tod[key] = datetime(1900, 1, 1, 0, 0, 0, 0, self.timezone)
 
@@ -60,7 +61,6 @@ class WorldBossTimers(Handler):
                         'Caught unhandled exception')
                 raise e
 
-    # Parses scout and kill strings for world bosses
     def _parse_tod_string(self, message):
         msg_split = message.content.split(maxsplit=2)
         name = msg_split[1]
@@ -70,16 +70,16 @@ class WorldBossTimers(Handler):
         key = name.lower()[:3]
         if key in self._wb_tod:
             try:
-                dt = self.timestr_to_datetime(timestr)
-            except Exception as e:
-                return 'Parsing error: could not interpret "{}"'.format(timestr)
+                dt = self._timestr_to_datetime(timestr)
+            except ValueError as e:
+                return 'Parsing error: {} when parsing "{}"'.format(e, timestr)
             self._wb_tod[key] = dt
             return 'Changed TOD of {} to {:%Y-%m-%d %H:%M}'.format(key, dt)
         else:
             return 'Parsing error: key {} does not match any of {}'.format(key,
                                                 ", ".join(self._wb_tod.keys()))
 
-    def timestr_to_datetime(self,timestr):
+    def _timestr_to_datetime(self, timestr):
         dt = datetime.now(self.timezone)
         y,m,d,H,M,*_ = dt.timetuple()
         numbers = [int(n) for n in re.findall("\d+", timestr)]
@@ -89,9 +89,10 @@ class WorldBossTimers(Handler):
             m,d,H,M = numbers
         elif len(numbers) == 2:
             H,M = numbers
-        elif len(numbers) in [1,3]:
+        elif len(numbers) in [1, 3]:
             raise ValueException
-        return dt.replace(year=y, month=m, day=d, hour=H, minute=M)
+        res = dt.replace(year=y, month=m, day=d, hour=H, minute=M)
+        return res
 
     def _construct_timer_response(self):
         response = "```Servertime: {servertime:%a %d %b %H:%M}\n{lines}```"
@@ -106,22 +107,21 @@ class WorldBossTimers(Handler):
             additional = ""
             if cur_dt < start_dt:
                 diff = start_dt-cur_dt
-                d,h = diff.days, diff.seconds//3600
-                additional = "opens in {}d {}h".format(d,h)
+                d = diff.days
+                h = diff.seconds // 3600
+                m = diff.seconds % 3600 // 60
+                additional = "opens in {}d {}h {}m".format(d, h, m)
             elif cur_dt <= end_dt:
                 diff = end_dt-cur_dt
-                d,h = diff.days, diff.seconds//3600+1
-                additional = "closes in {}d {}h".format(d,h)
+                d = diff.days
+                h = diff.seconds // 3600
+                m = diff.seconds % 3600 // 60
+                additional = "closes in {}d {}h {}m".format(d, h, m)
             else:
                 additional = "window has passed"
-            timer_lines.append(line_fmt.format(key,start_dt,end_dt,additional))
+            tmp_line = line_fmt.format(key, start_dt, end_dt, additional)
+            timer_lines.append(tmp_line)
         return response.format(servertime=cur_dt, lines="\n".join(timer_lines))
 
     def command_triggers(self):
         return ['!tod', '!timers']
-
-def main():
-    d = datetime.now()
-
-if __name__ == "__main__":
-    main()

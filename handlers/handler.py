@@ -8,6 +8,7 @@ class Handler:
     def register_bot(self, bot):
         self._bot = bot
 
+    # Called by the bot when it has connected
     def client_ready(self):
         pass
 
