@@ -4,6 +4,7 @@ import re
 
 from .handler import Handler
 
+
 class GMT1(tzinfo):
     def utcoffset(self, dt):
         return timedelta(hours=1) + self.dst(dt)
