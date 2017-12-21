@@ -2,6 +2,7 @@ import argparse
 
 from handlers import guild_bank
 from handlers import world_boss_loot
+from handlers import world_boss_timers
 from nsabot import NSABot
 
 if __name__ == '__main__':
@@ -32,4 +33,7 @@ if __name__ == '__main__':
         args.guild_server_id, args.totp_secret)
     wboss = world_boss_loot.WorldBossLoot(args.wb_channel_id, args.wb_role_id,
                                           args.wb_server_id)
-    NSABot([gbank, wboss]).run(args.bot_token)
+    timer = world_boss_timers.WorldBossTimers(args.wb_channel_id,
+                                              args.wb_role_id,
+                                              args.wb_server_id)
+    NSABot([gbank, wboss, timer]).run(args.bot_token)
