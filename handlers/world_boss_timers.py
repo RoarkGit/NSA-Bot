@@ -39,7 +39,6 @@ class WorldBossTimers(Handler):
         self._wb_role_id = wb_role_id
         self._wb_server_id = wb_server_id
         if wb_timer_shelve_file:
-          print('Reading from file')
           self._wb_tod = shelve.open(wb_timer_shelve_file)
         else:
           self._wb_tod = {}
