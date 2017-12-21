@@ -61,7 +61,8 @@ class WorldBossTimers(Handler):
                     response = self._parse_tod_string(message)
                     await self._bot.send_message(message.channel, response)
             if (message.content.startswith('!timers') and
-                message.channel in self.general_channels):
+                (message.channel in self.general_channels or
+                 message.channel in self.mod_channels)):
                 response = self._construct_timer_response()
                 await self._bot.send_message(message.channel, response)
         except Exception as e:
