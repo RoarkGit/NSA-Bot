@@ -1,4 +1,3 @@
-from collections import defaultdict
 from datetime import datetime, timedelta, tzinfo, timezone
 import re
 
@@ -6,6 +5,7 @@ from .handler import Handler
 
 
 class GMT1(tzinfo):
+
     def utcoffset(self, dt):
         return timedelta(hours=1) + self.dst(dt)
 
@@ -26,11 +26,15 @@ class GMT1(tzinfo):
 
 
 class WorldBossTimers(Handler):
-    def __init__(self, wb_channel_id, wb_role_id, wb_server_id):
+
+    def __init__(self, wb_analysis_channel_id, wb_general_channel_id,
+                 wb_role_id, wb_server_id):
         self.timezone = GMT1()
-        self.channels = []
+        self.mod_channels = []
+        self.general_channels = []
         self.roles = []
-        self._wb_channel_id = wb_channel_id
+        self._wb_analysis_channel_id = wb_analysis_channel_id
+        self._wb_general_channel_id = wb_general_channel_id
         self._wb_role_id = wb_role_id
         self._wb_server_id = wb_server_id
         self._wb_tod = {"azu": None, "kaz": None, "drg": None}
@@ -44,23 +48,26 @@ class WorldBossTimers(Handler):
                     if role.id == self._wb_role_id:
                         self.roles.append(role)
                 for chan in serv.channels:
-                    if chan.id == self._wb_channel_id:
-                        self.channels.append(chan)
+                    if chan.id == self._wb_analysis_channel_id:
+                        self.mod_channels.append(chan)
+                    elif chan.id == self._wb_general_channel_id:
+                        self.general_channels.append(chan)
 
     async def process_message(self, message):
-        if message.channel in self.channels:
-            try:
-                if message.content.startswith('!tod'):
-                    if any(role in message.author.roles for role in self.roles):
-                        response = self._parse_tod_string(message)
-                        await self._bot.send_message(message.channel, response)
-                if message.content.startswith('!timers'):
-                    response = self._construct_timer_response()
+        try:
+            if (message.content.startswith('!tod') and
+                message.channel in self.mod_channels):
+                if any(role in message.author.roles for role in self.roles):
+                    response = self._parse_tod_string(message)
                     await self._bot.send_message(message.channel, response)
-            except Exception as e:
-                await self._bot.send_message(message.channel,
-                        'Caught unhandled exception')
-                raise e
+            if (message.content.startswith('!timers') and
+                message.channel in self.general_channels):
+                response = self._construct_timer_response()
+                await self._bot.send_message(message.channel, response)
+        except Exception as e:
+            await self._bot.send_message(message.channel,
+                    'Caught unhandled exception')
+            raise e
 
     def _parse_tod_string(self, message):
         msg_split = message.content.split(maxsplit=2)
