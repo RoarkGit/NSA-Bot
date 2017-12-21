@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, tzinfo, timezone
 import re
+import shelve
 
 from .handler import Handler
 
@@ -22,13 +23,13 @@ class GMT1(tzinfo):
             return timedelta(0)
 
     def tzname(self, dt):
-        return "GMT +1"
+        return 'GMT +1'
 
 
 class WorldBossTimers(Handler):
 
     def __init__(self, wb_analysis_channel_id, wb_general_channel_id,
-                 wb_role_id, wb_server_id):
+                 wb_role_id, wb_server_id, wb_timer_shelve_file=None):
         self.timezone = GMT1()
         self.mod_channels = []
         self.general_channels = []
@@ -37,9 +38,17 @@ class WorldBossTimers(Handler):
         self._wb_general_channel_id = wb_general_channel_id
         self._wb_role_id = wb_role_id
         self._wb_server_id = wb_server_id
-        self._wb_tod = {"azu": None, "kaz": None, "drg": None}
-        for key in self._wb_tod:
-            self._wb_tod[key] = datetime(1900, 1, 1, 0, 0, 0, 0, self.timezone)
+        if wb_timer_shelve_file:
+          print('Reading from file')
+          self._wb_tod = shelve.open(wb_timer_shelve_file)
+        else:
+          self._wb_tod = {}
+
+        boss_list = ['azu', 'kaz', 'drg']
+        for key in boss_list:
+            if key not in self._wb_tod:
+                self._wb_tod[key] = datetime(1900, 1, 1, 0, 0, 0, 0,
+                                             self.timezone)
 
     def client_ready(self):
         for serv in self._bot.servers:
@@ -73,7 +82,7 @@ class WorldBossTimers(Handler):
     def _parse_tod_string(self, message):
         msg_split = message.content.split(maxsplit=2)
         name = msg_split[1]
-        timestr = ""
+        timestr = ''
         if len(msg_split) > 2:
             timestr = msg_split[2]
         key = name.lower()[:3]
@@ -86,12 +95,12 @@ class WorldBossTimers(Handler):
             return 'Changed TOD of {} to {:%Y-%m-%d %H:%M}'.format(key, dt)
         else:
             return 'Parsing error: key {} does not match any of {}'.format(key,
-                                                ", ".join(self._wb_tod.keys()))
+                                                ', '.join(self._wb_tod.keys()))
 
     def _timestr_to_datetime(self, timestr):
         dt = datetime.now(self.timezone)
         y,m,d,H,M,*_ = dt.timetuple()
-        numbers = [int(n) for n in re.findall("\d+", timestr)]
+        numbers = [int(n) for n in re.findall('\d+', timestr)]
         if len(numbers) >= 5:
             y,m,d,H,M,*_ = numbers
         elif len(numbers) == 4:
@@ -104,33 +113,33 @@ class WorldBossTimers(Handler):
         return res
 
     def _construct_timer_response(self):
-        response = "```Servertime: {servertime:%a %d %b %H:%M}\n{lines}```"
-        line_fmt = "{}: starts {:%a %d %b %H:%M}, ends {:%a %d %b %H:%M} {}"
+        response = '```Servertime: {servertime:%a %d %b %H:%M}\n{lines}```'
+        line_fmt = '{}: starts {:%a %d %b %H:%M}, ends {:%a %d %b %H:%M} {}'
         cur_dt = datetime.now(self.timezone)
         timer_lines = []
         for key, val in self._wb_tod.items():
             start_dt = val + timedelta(days=3)
-            if key == "drg":
+            if key == 'drg':
                 start_dt += timedelta(days=1)
             end_dt = val + timedelta(days=7)
-            additional = ""
+            additional = ''
             if cur_dt < start_dt:
                 diff = start_dt-cur_dt
                 d = diff.days
                 h = diff.seconds // 3600
                 m = diff.seconds % 3600 // 60
-                additional = "opens in {}d {}h {}m".format(d, h, m)
+                additional = 'opens in {}d {}h {}m'.format(d, h, m)
             elif cur_dt <= end_dt:
                 diff = end_dt-cur_dt
                 d = diff.days
                 h = diff.seconds // 3600
                 m = diff.seconds % 3600 // 60
-                additional = "closes in {}d {}h {}m".format(d, h, m)
+                additional = 'closes in {}d {}h {}m'.format(d, h, m)
             else:
-                additional = "window has passed"
+                additional = 'window has passed'
             tmp_line = line_fmt.format(key, start_dt, end_dt, additional)
             timer_lines.append(tmp_line)
-        return response.format(servertime=cur_dt, lines="\n".join(timer_lines))
+        return response.format(servertime=cur_dt, lines='\n'.join(timer_lines))
 
     def command_triggers(self):
         return ['!tod', '!timers']
