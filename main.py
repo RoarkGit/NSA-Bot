@@ -19,21 +19,23 @@ if __name__ == '__main__':
                         help='id for guild discord server')
     parser.add_argument('totp_secret', type=str,
                         help='secret used for OTP generation')
-    parser.add_argument('wb_channel_id', type=str,
-                        help=('id for channel used for world boss loot '
-                              'calculations'))
-    parser.add_argument('wb_role_id', type=str,
-                        help=('id for role allowed to perform world boss '
-                              'calculations'))
+    parser.add_argument('wb_analysis_channel_id', type=str,
+                        help='id for world boss analysis channel')
+    parser.add_argument('wb_general_channel_id', type=str,
+                        help='id for world boss general channel')
+    parser.add_argument('wb_mod_role_id', type=str,
+                        help='id for world boss mod role')
     parser.add_argument('wb_server_id', type=str,
                         help='id for world boss discord server')
+    parser.add_argument('--wb_timer_shelve_file', type=str, default=None,
+                        help='path to file for storing world boss timers')
     args = parser.parse_args()
     gbank = guild_bank.GuildBank(
         args.log_to_file, args.bank_channel_id, args.bank_role_id,
         args.guild_server_id, args.totp_secret)
-    wboss = world_boss_loot.WorldBossLoot(args.wb_channel_id, args.wb_role_id,
-                                          args.wb_server_id)
-    timer = world_boss_timers.WorldBossTimers(args.wb_channel_id,
-                                              args.wb_role_id,
-                                              args.wb_server_id)
+    wboss = world_boss_loot.WorldBossLoot(
+        args.wb_analysis_channel_id, args.wb_mod_role_id, args.wb_server_id)
+    timer = world_boss_timers.WorldBossTimers(
+        args.wb_analysis_channel_id, args.wb_general_channel_id,
+        args.wb_mod_role_id, args.wb_server_id, args.wb_timer_shelve_file)
     NSABot([gbank, wboss, timer]).run(args.bot_token)

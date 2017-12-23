@@ -4,15 +4,19 @@ from .handler import Handler
 
 
 class WorldBossLoot(Handler):
-    def __init__(self, wb_channel_id, wb_role_id, wb_server_id):
+
+    def __init__(self, wb_analysis_channel_id, wb_mod_role_id, wb_server_id):
         self._kill_dict = defaultdict(int)
         self._scout_dict = defaultdict(int)
-        self._wb_channel_id = wb_channel_id
-        self._wb_role_id = wb_role_id
+        self._wb_analysis_channel_id = wb_analysis_channel_id
+        self._wb_mod_role_id = wb_mod_role_id
         self._wb_server_id = wb_server_id
+        self.channels = []
+        self.mod_roles = []
 
     async def process_message(self, message):
-        if message.channel.id == self._wb_channel_id:
+        if (message.channel in self.channels and
+            any(role in self.mod_roles for role in message.author.roles)):
             try:
                 if message.content.startswith('!scout'):
                     self._scout_dict = self._parse_wb_string(message)
@@ -32,6 +36,7 @@ class WorldBossLoot(Handler):
                     await self._bot.send_message(message.channel, response)
             except Exception as e:
                 await self._bot.send_message(message.channel, 'Parsing error.')
+                raise e
             if message.content.startswith('!calc'):
                 try:
                     ranges = self._wb_calc()
@@ -43,6 +48,17 @@ class WorldBossLoot(Handler):
                 except Exception as e:
                     await self._bot.send_message(
                         message.channel, 'Error performing calculation.')
+                    raise e
+
+    def client_ready(self):
+        for server in self._bot.servers:
+            if server.id == self._wb_server_id:
+                for role in server.roles:
+                    if role.id == self._wb_mod_role_id:
+                        self.mod_roles.append(role)
+                for channel in server.channels:
+                    if channel.id == self._wb_analysis_channel_id:
+                        self.channels.append(channel)
 
     # Parses scout and kill strings for world bosses
     def _parse_wb_string(self, message):
