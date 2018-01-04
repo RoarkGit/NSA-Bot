@@ -107,7 +107,7 @@ class WorldBossTimers(Handler):
         elif len(numbers) == 2:
             H,M = numbers
         elif len(numbers) in [1, 3]:
-            raise ValueException
+            raise ValueError
         res = dt.replace(year=y, month=m, day=d, hour=H, minute=M)
         return res
 
@@ -115,7 +115,7 @@ class WorldBossTimers(Handler):
         response = '```Servertime: {servertime:%a %d %b %H:%M}\n{lines}```'
         line_fmt = '{}: starts {:%a %d %b %H:%M}, ends {:%a %d %b %H:%M} {}'
         cur_dt = datetime.now(self.timezone)
-        timer_lines = []
+        timer_values = []
         for key, val in self._wb_tod.items():
             start_dt = val + timedelta(days=3)
             if key == 'drg':
@@ -137,7 +137,9 @@ class WorldBossTimers(Handler):
             else:
                 additional = 'window has passed'
             tmp_line = line_fmt.format(key, start_dt, end_dt, additional)
-            timer_lines.append(tmp_line)
+            timer_values.append((tmp_line, start_dt))
+        timer_values.sort(key=lambda x: x[1])
+        timer_lines = [line for line, _ in timer_values]
         return response.format(servertime=cur_dt, lines='\n'.join(timer_lines))
 
     def command_triggers(self):
