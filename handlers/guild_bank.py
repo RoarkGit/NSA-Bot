@@ -7,13 +7,11 @@ from .handler import Handler
 
 class GuildBank(Handler):
 
-    def __init__(self, log_to_file, bank_channel_id, bank_role_id,
-                 guild_server_id, totp_secret):
+    def __init__(self, log_to_file, bank_channel_id, bank_role_id, totp_secret):
         super().__init__()
         self._log_to_file = log_to_file
         self._bank_channel_id = bank_channel_id
         self._bank_role_id = bank_role_id
-        self._guild_server_id = guild_server_id
         self._totp = TOTP(totp_secret)
         self.bank_roles = []
         self.bank_channels = []
@@ -52,13 +50,12 @@ class GuildBank(Handler):
 
     def client_ready(self):
         for server in self._bot.servers:
-            if server.id == self._guild_server_id:
-              for role in server.roles:
-                  if role.id == self._bank_role_id:
-                      self.bank_roles.append(role)
-              for channel in server.channels:
-                  if channel.id == self._bank_channel_id:
-                      self.bank_channels.append(channel)
+          for role in server.roles:
+              if role.id == self._bank_role_id:
+                  self.bank_roles.append(role)
+          for channel in server.channels:
+              if channel.id == self._bank_channel_id:
+                  self.bank_channels.append(channel)
 
     def command_triggers(self):
         return ['!2fa']

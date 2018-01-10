@@ -29,7 +29,7 @@ class GMT1(tzinfo):
 class WorldBossTimers(Handler):
 
     def __init__(self, wb_analysis_channel_id, wb_general_channel_id,
-                 wb_role_id, wb_server_id, wb_timer_shelve_file=None):
+                 wb_role_id, wb_timer_shelve_file=None):
         self.timezone = GMT1()
         self.mod_channels = []
         self.general_channels = []
@@ -37,7 +37,6 @@ class WorldBossTimers(Handler):
         self._wb_analysis_channel_id = wb_analysis_channel_id
         self._wb_general_channel_id = wb_general_channel_id
         self._wb_role_id = wb_role_id
-        self._wb_server_id = wb_server_id
         if wb_timer_shelve_file:
           self._wb_tod = shelve.open(wb_timer_shelve_file)
         else:
@@ -51,15 +50,14 @@ class WorldBossTimers(Handler):
 
     def client_ready(self):
         for serv in self._bot.servers:
-            if serv.id == self._wb_server_id:
-                for role in serv.roles:
-                    if role.id == self._wb_role_id:
-                        self.roles.append(role)
-                for chan in serv.channels:
-                    if chan.id == self._wb_analysis_channel_id:
-                        self.mod_channels.append(chan)
-                    elif chan.id == self._wb_general_channel_id:
-                        self.general_channels.append(chan)
+            for role in serv.roles:
+                if role.id == self._wb_role_id:
+                    self.roles.append(role)
+            for chan in serv.channels:
+                if chan.id == self._wb_analysis_channel_id:
+                    self.mod_channels.append(chan)
+                elif chan.id == self._wb_general_channel_id:
+                    self.general_channels.append(chan)
 
     async def process_message(self, message):
         try:
