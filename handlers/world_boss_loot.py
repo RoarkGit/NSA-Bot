@@ -5,10 +5,10 @@ from .handler import Handler
 
 class WorldBossLoot(Handler):
 
-    def __init__(self, wb_analysis_channel_id, wb_mod_role_id):
+    def __init__(self, wb_analysis_channel_ids, wb_mod_role_id):
         self._kill_dict = defaultdict(int)
         self._scout_dict = defaultdict(int)
-        self._wb_analysis_channel_id = wb_analysis_channel_id
+        self._wb_analysis_channel_ids = set(wb_analysis_channel_ids)
         self._wb_mod_role_id = wb_mod_role_id
         self.channels = []
         self.mod_roles = []
@@ -55,7 +55,7 @@ class WorldBossLoot(Handler):
                 if role.id == self._wb_mod_role_id:
                     self.mod_roles.append(role)
             for channel in server.channels:
-                if channel.id == self._wb_analysis_channel_id:
+                if channel.id in self._wb_analysis_channel_ids:
                     self.channels.append(channel)
 
     # Parses scout and kill strings for world bosses
